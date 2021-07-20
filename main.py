@@ -4,6 +4,27 @@ import requests
 from bs4 import BeautifulSoup
 
 
+def property_sold_price_lookup_by_location(location: str):
+    sold_property_url = 'https://www.rightmove.co.uk/house-prices/search.html?searchLocation=' + location
+    print("'" + sold_property_url + "'")
+
+    sold_property_html_content = requests.get(sold_property_url).text
+    sold_property_soup = BeautifulSoup(
+        sold_property_html_content, 'lxml')
+
+    try:
+        avg_property_price_summary = sold_property_soup.find(
+            'meta', attrs={'name': 'description'})['content']
+
+        avg_property_price = re.search(
+            'is.* over', avg_property_price_summary).group(0)[3:-5]
+
+        return avg_property_price
+    except Exception as e:
+        # Need to clean. Seperate Attribute and NoneType exceptions.
+        return('Unavailable')
+
+
 class Property:
     def __init__(self, id: int, type: str, address: str, price: str, description: str, branch_summary: str):
         self.id = id
@@ -15,53 +36,17 @@ class Property:
         self.url: str = 'https://www.rightmove.co.uk/properties/' + \
             str(self.id)
 
-    def print_details(self, include_description: bool = False, include_branch_summary: bool = False):
+    def print_details(self, include_description: bool = False, include_branch_summary: bool = True):
         print('Type:', self.type)
         print('Address:', self.address)
         print('Price:', self.price)
+        if include_branch_summary:
+            print('Branch Summary:', self.branch_summary)
+        print('URL:', self.url)
+        print('+ Average price by location:', property_sold_price_lookup_by_location(
+            location=self.address))
         if include_description:
             print('Description:', self.description)
-        if include_branch_summary:
-            print('Description:', self.description)
-
-        print('URL:', self.url)
-
-
-def property_sold_price_lookup_by_location(location: str):
-    sold_property_url = 'https://www.rightmove.co.uk/house-prices/search.html?searchLocation=' + location
-
-    sold_property_html_content = requests.get(sold_property_url).text
-    sold_property_soup = BeautifulSoup(
-        sold_property_html_content, 'lxml')
-
-    avg_property_price_summary = sold_property_soup.find(
-        'meta', attrs={'name': 'description'})['content']
-
-    # print(avg_property_price_summary)
-
-    avg_property_price = re.search(
-        'is.* over', avg_property_price_summary)[match]
-
-    print(avg_property_price)
-
-    # print(sold_property_url)
-
-    # / is.* over /gm
-    # Could be improved - unclean current state
-
-    # blurb = sold_property_soup.find(class_='blurb-container')
-    # blurb_text = blurb.find(class_='title')
-    # print(blurb_text)
-    # data = sold_property_html_content.loads(
-    #     sold__property_soup.find(class_='blurb-container').text)
-
-    # print(sold__property_soup.prettify)
-
-    # for b in a:
-    #     print(b)
-
-    # for para in sold__property_soup.find_all(class_='results-summary'):
-    #     print(para)
 
 
 def generate_rightmove_property_list(location: str, property_type: str = '', sort_by_newest_listed: bool = True, sale_or_rent: str = 'sale'):
@@ -111,10 +96,9 @@ def generate_rightmove_property_list(location: str, property_type: str = '', sor
 
 
 if __name__ == '__main__':
-    # rightmove_property_list = generate_rightmove_property_list(
-    #     location='Harrow', property_type='house', sale_or_rent='sale')
+    rightmove_property_list = generate_rightmove_property_list(
+        location='Harrow', property_type='house', sale_or_rent='sale')
 
-    # rightmove_property_list[0].print_details()
-
-    property_sold_price_lookup_by_location(
-        location='Crown Street, Harrow on the Hill, Harrow, HA2')
+    for n in range(0, len(rightmove_property_list)):
+        rightmove_property_list[n].print_details()
+        print('\n')
