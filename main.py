@@ -48,6 +48,9 @@ class Property:
         if include_description:
             print('Description:', self.description)
 
+    def append_to_sheet(self):
+        pass
+
 
 def generate_rightmove_property_list(location: str, property_type: str = '', sort_by_newest_listed: bool = True, sale_or_rent: str = 'sale'):
     rightmove_URL = 'https://www.rightmove.co.uk/' + \
@@ -96,9 +99,9 @@ def generate_rightmove_property_list(location: str, property_type: str = '', sor
 
 
 if __name__ == '__main__':
-    rightmove_property_list = generate_rightmove_property_list(
-        location='Harrow', property_type='house', sale_or_rent='sale')
+    # rightmove_property_list = generate_rightmove_property_list(
+    #     location='Harrow', property_type='house', sale_or_rent='sale')
 
-    for n in range(0, len(rightmove_property_list)):
-        rightmove_property_list[n].print_details()
-        print('\n')
+    # for n in range(0, len(rightmove_property_list)):
+    #     rightmove_property_list[n].print_details()
+    #     print('\n')
