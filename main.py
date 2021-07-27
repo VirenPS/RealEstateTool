@@ -8,8 +8,8 @@ import requests
 from bs4 import BeautifulSoup
 from openpyxl import load_workbook
 
+# # date_today = '2021-07-20'
 date_today = date.today()
-# date_today = '2021-07-18'
 
 
 def property_sold_price_lookup_by_location(location: str):
@@ -98,16 +98,22 @@ def append_to_dataframe(property_list_path='Property_temp_file.xlsx'):
 
         # Update Values
         for index, row in combined_df.iterrows():
-            if not pd.isna(row['Type_temp']) and row['Type_temp'] != row['Type']:
+            try:
+                if not pd.isna(row['Type_temp']) and row['Type_temp'] != row['Type']:
+                    row['Type'] = row['Type_temp']
+                if not pd.isna(row['Address_temp']) and row['Address_temp'] != row['Address']:
+                    row['Address'] = row['Address_temp']
+                if not pd.isna(row['URL_temp']) and row['URL_temp'] != row['URL']:
+                    row['URL'] = row['URL_temp']
+                if not pd.isna(row['Avg Price by location_temp']) and row['Avg Price by location_temp'] != row['Avg Price by location']:
+                    row['Avg Price by location'] = row['Avg Price by location_temp']
+            except:
                 row['Type'] = row['Type_temp']
-            if not pd.isna(row['Address_temp']) and row['Address_temp'] != row['Address']:
                 row['Address'] = row['Address_temp']
-            if not pd.isna(row['URL_temp']) and row['URL_temp'] != row['URL']:
                 row['URL'] = row['URL_temp']
-            if not pd.isna(row['Avg Price by location_temp']) and row['Avg Price by location_temp'] != row['Avg Price by location']:
                 row['Avg Price by location'] = row['Avg Price by location_temp']
 
-        combined_df.drop(['Type_temp', 'Address_temp', 'URL_temp',
+        combined_df.drop([f'Type_{date_today}_temp', 'Address_temp', 'URL_temp',
                           'Avg Price by location_temp'], inplace=True, axis=1)
 
         print(combined_df)
