@@ -8,8 +8,8 @@ import requests
 from bs4 import BeautifulSoup
 from openpyxl import load_workbook
 
-# # date_today = '2021-07-20'
-date_today = date.today()
+date_today = '2021-01-04'
+# date_today = date.today()
 
 
 def property_sold_price_lookup_by_location(location: str):
@@ -72,51 +72,56 @@ def append_to_dataframe(property_list_path='Property_temp_file.xlsx'):
     else:
         print(f'Appending column with {date_today} prices')
 
-        ws = load_workbook(property_list_path)['Sheet1']
-        df = pd.DataFrame(ws.values)
+        prices_ws = load_workbook(property_list_path)['Sheet1']
+        prices_df = pd.DataFrame(prices_ws.values)
 
-        new_header = df.iloc[0]
-        df = df[1:]
-        df.columns = new_header
+        new_header = prices_df.iloc[0]
+        prices_df = prices_df[1:]
+        prices_df.columns = new_header
+
+        column_name_list = list(prices_df.columns.values)
+
+        if any(str(date_today) in column_name for column_name in column_name_list):
+            exit(
+                f'Prices for {date_today} already exist in the Property Price List.')
 
         temp_df = pd.DataFrame([n.as_dict() for n in rightmove_property_list])
 
-        # print('df')
-        # print(df)
-
-        # print('temp_df')
-        # print(temp_df)
-
-        for index, row in df.iterrows():
+        for index, row in prices_df.iterrows():
             row['ID'] = float(row['ID'])
 
         for index, row in temp_df.iterrows():
             row['ID'] = float(row['ID'])
 
-        combined_df = df.join(temp_df.set_index(
+        temp_combined_df = prices_df.join(temp_df.set_index(
             'ID'), on='ID', rsuffix='_temp', how='outer')
 
+        # temp_combined_df.row['Type'].update(temp_combined_df.row['Type_temp'])
+        temp_combined_df['COL3'] = temp_combined_df.Type.combine_first(
+            temp_combined_df.Type_temp)
+
         # Update Values
-        for index, row in combined_df.iterrows():
-            try:
-                if not pd.isna(row['Type_temp']) and row['Type_temp'] != row['Type']:
-                    row['Type'] = row['Type_temp']
-                if not pd.isna(row['Address_temp']) and row['Address_temp'] != row['Address']:
-                    row['Address'] = row['Address_temp']
-                if not pd.isna(row['URL_temp']) and row['URL_temp'] != row['URL']:
-                    row['URL'] = row['URL_temp']
-                if not pd.isna(row['Avg Price by location_temp']) and row['Avg Price by location_temp'] != row['Avg Price by location']:
-                    row['Avg Price by location'] = row['Avg Price by location_temp']
-            except:
-                row['Type'] = row['Type_temp']
-                row['Address'] = row['Address_temp']
-                row['URL'] = row['URL_temp']
-                row['Avg Price by location'] = row['Avg Price by location_temp']
+        # for index, row in temp_combined_df.iterrows():
+        # print('_______')
+        # df.Col2 = df.Col1.where(df.Col2 > 'X', df.Col2)
+        # if len(str(row['Type'])) < len(str(row['Type_temp'])):
+        #     row['Type'] = row['Type_temp']
+        # if len(str(row['Address'])) < len(str(row['Address_temp'])):
+        #     row['Address'] = row['Address_temp']
+        # if len(str(row['URL'])) < len(str(row['URL_temp'])):
+        #     row['URL'] = row['URL_temp']
+        # if len(str(row['Avg Price by location'])) < len(str(row['Avg Price by location_temp'])):
+        #     row['Avg Price by location'] = row['Avg Price by location_temp']
+        # temp_combined_df.drop([f'Type_{date_today}_temp', 'Address_temp', 'URL_temp',
+        #                   'Avg Price by location_temp'], inplace=True, axis=1)
 
-        combined_df.drop([f'Type_{date_today}_temp', 'Address_temp', 'URL_temp',
-                          'Avg Price by location_temp'], inplace=True, axis=1)
+        # print(temp_combined_df)
 
-        print(combined_df)
+        # combined_df = temp_combined_df.loc[:, [
+        #     '_temp' not in i for i in temp_combined_df.columns]]
+        combined_df = temp_combined_df
+
+        # print(combined_df)
 
         writer = pd.ExcelWriter(property_list_path, engine='xlsxwriter', options={
             'strings_to_numbers': True})
